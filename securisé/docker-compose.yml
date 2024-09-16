@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    container_name: elasticsearch_sec
+    networks:
+      - elastic
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=elastic
+      # - xpack.security.enabled=false
+      # - xpack.security.http.ssl.enabled=false
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.1
+    container_name: logstash_sec
+    networks:
+      - elastic
+    volumes:
+      - /usr/share/logstash/pipeline/logstash.conf/://c/Users/matsa/Documents/TELECOM PARIS/PERIODE 2/05_SÉCURITÉ POUR LE BIG DATA/securisé/logstash.conf
+      - /usr/share/logstash/config/logstash.yml://c/Users/matsa/Documents/TELECOM PARIS/PERIODE 2/05_SÉCURITÉ POUR LE BIG DATA/securisé/logstash.yml
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.1
+    container_name: kibana_sec
+    networks:
+      - elastic
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_URL=https://elasticsearch:9200
+      - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
+
+  packetbeat:
+    image: docker.elastic.co/beats/packetbeat:8.12.1
+    container_name: packetbeat_sec
+    networks:
+      - elastic
+    user: root
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+      - SYS_PTRACE
+    volumes:
+      - /usr/share/packetbeat/packetbeat.yml://c/Users/matsa/Documents/TELECOM PARIS/PERIODE 2/05_SÉCURITÉ POUR LE BIG DATA/securisé/packetbeat.yml
+    depends_on:
+      - elasticsearch
+    environment:
+      - strict.perms=false
+
+networks:
+  elastic:
+    driver: bridge

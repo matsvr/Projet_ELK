@@ -1,0 +1,37 @@
+# packetbeat.interfaces.device: any
+
+# packetbeat.flows:
+#   timeout: 30s
+#   period: 10s
+
+packetbeat.protocols:
+  - type: icmp
+    enabled: true
+  - type: amqp
+    ports: [5672]
+  - type: dns
+    ports: [53]
+    include_authorities: true
+    include_additionals: true
+
+packetbeat.interfaces.file: /usr/share/packetbeat/4SICS-GeekLounge-151022.pcap
+
+# Configure the Elasticsearch output
+output.elasticsearch:
+  hosts: ["https://elasticsearch:9200"]
+  username: "elastic"
+  password: "elastic"
+# output.logstash:
+#   hosts: ["logstash:5044"]
+
+# Configure logging
+# logging.level: info
+# logging.to_files: true
+# logging.files:
+#   path: /var/log/packetbeat
+#   name: packetbeat
+#   keepfiles: 7
+#   permissions: 0644
+
+# processors:
+# - add_cloud_metadata: ~

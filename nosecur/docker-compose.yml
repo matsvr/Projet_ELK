@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    container_name: elasticsearch
+    networks:
+      - elastic
+    ports:
+      - "9200:9200"
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.1
+    container_name: logstash
+    user: root
+    networks:
+      - elastic
+    ports:
+    - "5044:5044"
+    volumes:
+      # - /c/Users/matsa/Documents/logstash.yml:/usr/share/logstash/config/logstash.yml
+      # - /c/Users/matsa/Documents/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - /c/Users/matsa/Documents/pipeline:/usr/share/logstash/pipeline
+    command: logstash -f /usr/share/logstash/pipeline/logstash.conf
+    environment:
+      - NODE_NAME="logstash"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.1
+    container_name: kibana
+    networks:
+      - elastic
+    ports:
+      - "5601:5601"
+    environment:
+      - SERVERNAME=kibana
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+
+  packetbeat:
+    image: docker.elastic.co/beats/packetbeat:8.12.1
+    container_name: packetbeat
+    networks:
+      - elastic
+    user: root
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+      - SYS_PTRACE
+    volumes:
+      - /c/Users/matsa/Documents/packetbeat.yml:/usr/share/packetbeat/packetbeat.yml
+      - /c/Users/matsa/Documents/4SICS-GeekLounge-151022.pcap:/usr/share/packetbeat/4SICS-GeekLounge-151022.pcap
+    depends_on:
+      - elasticsearch
+    environment:
+      - strict.perms=false
+      - ELASTIC_HOSTS=https://elasticsearch:9200
+      - KIBANA_HOSTS=kibana:5601
+      - LOGSTASH_HOSTS=logstash:5044
+    command: ["/usr/share/packetbeat/packetbeat", "-I", "/usr/share/packetbeat/4SICS-GeekLounge-151022.pcap"]
+
+
+volumes:
+  logstash:
+    external: true
+  packetbeat:
+    external: true
+
+networks:
+  elastic:
+    driver: bridge
